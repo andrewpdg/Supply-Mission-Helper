@@ -1,0 +1,24 @@
+[
+  {
+    "Author": "YourName",
+    "Name": "Supply Mission Helper",
+    "Punchline": "Calculate materials needed for Grand Company Supply Missions",
+    "Description": "This plugin scans your daily Grand Company Supply Missions and provides a comprehensive list of all materials needed to complete them, including raw materials for crafting.",
+    "InternalName": "SupplyMissionHelper",
+    "AssemblyVersion": "0.0.1",
+    "RepoUrl": "https://github.com/andrewpdg/Supply-Mission-Helper",
+    "ApplicableVersion": "any",
+    "Tags": [
+      "Grand Company",
+      "Crafting",
+      "Helper",
+      "Supply Missions"
+    ],
+    "DalamudApiLevel": 10,
+    "IconUrl": "",
+    "ImageUrls": [],
+    "DownloadLinkInstall": "https://github.com/andrewpdg/Supply-Mission-Helper/releases/latest/download/SupplyMissionHelper.zip",
+    "DownloadLinkUpdate": "https://github.com/andrewpdg/Supply-Mission-Helper/releases/latest/download/SupplyMissionHelper.zip",
+    "DownloadLinkTesting": "https://github.com/andrewpdg/Supply-Mission-Helper/releases/latest/download/SupplyMissionHelper.zip"
+  }
+]
