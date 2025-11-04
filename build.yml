@@ -1,0 +1,84 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Download Dalamud
+        run: |
+          Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile latest.zip
+          Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev"
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Create release artifact
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          $outputPath = "bin/Release/net8.0-windows"
+          
+          # Update version in manifest
+          $manifest = Get-Content "SupplyMissionHelper.json" | ConvertFrom-Json
+          $manifest.AssemblyVersion = $version
+          $manifest | ConvertTo-Json | Set-Content "SupplyMissionHelper.json"
+          
+          # Create release directory
+          New-Item -ItemType Directory -Force -Path release
+          
+          # Copy files
+          Copy-Item "$outputPath/SupplyMissionHelper.dll" -Destination release/
+          Copy-Item "SupplyMissionHelper.json" -Destination release/
+          
+          # Create zip
+          Compress-Archive -Path release/* -DestinationPath SupplyMissionHelper.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SupplyMissionHelper
+          path: SupplyMissionHelper.zip
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: SupplyMissionHelper.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update repo.json
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          $repo = Get-Content "repo.json" | ConvertFrom-Json
+          $repo[0].AssemblyVersion = $version
+          $repo[0].LastUpdated = [int][double]::Parse((Get-Date -UFormat %s))
+          $repo | ConvertTo-Json -Depth 10 | Set-Content "repo.json"
+          
+          # Commit updated repo.json back to main branch
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git checkout main
+          git add repo.json
+          git commit -m "Update repo.json for version $version" || echo "No changes to commit"
+          git push origin main || echo "No changes to push"
